@@ -1,7 +1,18 @@
 import xlsxwriter
 import json
+import requests
 from os import listdir
 from os.path import isfile, join
+
+
+# Convert minecraft name to UUID
+def convert_minecraft_name_to_uuid(name):
+    api_request = requests.get("https://api.mojang.com/users/profiles/minecraft/" + name)
+    json_data = api_request.json()
+    if "id" in json_data:
+        return json_data["id"]
+    else:
+        return "Error. uuid of " + name + " not found."
 
 
 # Convert number to column number
@@ -13,31 +24,33 @@ def column_string(n):
     return string
 
 
+# Excluded UUID's
+excluded_uuid_list = ["d4de507e-d284-4470-8e15-18b752284a04"]
+excluded_player_names_list = ["BearVintage", "ChemistryGuy"]
+for player_name in excluded_player_names_list:
+    short_player_uuid = convert_minecraft_name_to_uuid(player_name)
+    excluded_uuid_list.append(short_player_uuid[:8:] + '-' + short_player_uuid[8:12:] + '-' + short_player_uuid[12:16:] + '-' + short_player_uuid[16:20:] + '-' + short_player_uuid[20::])
+
 # Colors
 light_magenta = "#FF80FF"
 light_pink = "#FDDCE8"
 
-# Player UUID to name dict
-player_uuid_to_name_dict = {
-    '3b8b537d-4fe4-4038-897d-1ce0ce4cb894': 'Chabeloin',
-    '3be7c9f5-c656-4df2-af65-37f4f2f862b4': 'PinkDraconian',
-    '531b71f3-1b9a-4102-8148-692d575ab64c': 'BlazinPsycho420',
-    '6a7e1f3b-d1c4-444c-bed4-265d152349c5': 'mariejuliee',
-    '7efc6a1c-fd0b-46d2-8539-8db5dd7f159c': 'FriendlyBot',
-    '8c4ecf3b-13c6-45e9-8c91-c3122722568d': 'Wooselini',
-    'a9930b7e-accf-44fb-9b73-01f170064eb8': 'zoezoe_shpa',
-    'da78f155-c564-44b4-9faf-1f7731edcd51': 'greco1999',
-}
-
 # Get name of all stats files
 path = "D:\\Users\\vanro\\Documenten\\Data\\MinecraftBackups\\stats"
-players = [f for f in listdir(path) if isfile(join(path, f)) and f[:-5:] in player_uuid_to_name_dict.keys()]
+players = [f for f in listdir(path) if isfile(join(path, f)) and f[-4::] == "json" and f[:-5:] not in excluded_uuid_list]
 
-# Get playerdata
-playerdata = []
+# Get player_data
+player_data = []
+player_uuid_name_dict = {}
 for player in players:
     file = open(path + "\\" + player, "r")
-    playerdata.append([player[:-5:], json.loads(file.readline())])
+    name_fetch = requests.get("https://sessionserver.mojang.com/session/minecraft/profile/" + player.replace("-", "")[:-5:]).json()
+    if "name" in name_fetch:
+        player_uuid_name_dict[player[:-5:]] = name_fetch["name"]
+    else:
+        player_uuid_name_dict[player[:-5:]] = "Fetch failed. Please try again in a minute."
+    player_data.append([player[:-5:], json.loads(file.readline())])
+
 
 # Get first rows
 killed_by_first_row = []
@@ -49,7 +62,7 @@ dropped_first_row = []
 picked_up_first_row = []
 custom_first_row = []
 broken_first_row = []
-for statistics in playerdata:
+for statistics in player_data:
     stats = statistics[1]["stats"]
     if "minecraft:killed_by" in stats:
         for stat in stats["minecraft:killed_by"]:
@@ -140,10 +153,10 @@ for i in range(0, len(broken_first_row)):
 
 # Filling up the spreadsheet
 row = 1
-for data in playerdata:
+for data in player_data:
     # Add name to each spreadsheet
     for sheet in worksheets:
-        sheet.write(row, 0, player_uuid_to_name_dict.get(data[0]), cell_first_row)
+        sheet.write(row, 0, player_uuid_name_dict.get(data[0]), cell_first_row)
 
     # Add statistics
     stats = data[1]["stats"]
