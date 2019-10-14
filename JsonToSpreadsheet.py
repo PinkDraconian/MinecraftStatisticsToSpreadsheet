@@ -16,6 +16,8 @@ def convert_minecraft_name_to_uuid(name):
 
 
 # Convert number to column number
+# Parameter: Integer in form of column number
+# Return: String
 def column_string(n):
     string = ""
     while n > 0:
