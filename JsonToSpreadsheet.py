@@ -38,6 +38,10 @@ for player_name in excluded_player_names_list:
 # Colors
 light_magenta = "#FF80FF"
 light_pink = "#FDDCE8"
+black = "#000000"
+dark_green = "#006400"
+red = "#FF0000"
+fushsia = "FF00FF"
 
 # Get name of all stats files
 path = "D:\\Users\\vanro\\Documenten\\Data\\MinecraftBackups\\stats"
