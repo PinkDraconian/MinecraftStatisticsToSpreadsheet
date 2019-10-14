@@ -5,7 +5,9 @@ from os import listdir
 from os.path import isfile, join
 
 
-# Convert minecraft name to UUID
+# Convert minecraft name to UUID. Requires internet access!
+# Argument: string in form of name of user
+# Return: string in form of uuid of player
 def convert_minecraft_name_to_uuid(name):
     api_request = requests.get("https://api.mojang.com/users/profiles/minecraft/" + name)
     json_data = api_request.json()
